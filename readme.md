@@ -24,6 +24,13 @@
         }
         ```
 
+        To scrape raw data, run:
+
+        ```bash
+        cd ./scrapping
+        scrapy crawl sov-obshchepit -O ../data/raw_data.json
+        ```
+
 2. Data Wrangling
 
     pass

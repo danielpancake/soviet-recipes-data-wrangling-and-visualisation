@@ -9,20 +9,17 @@
             - [Website "1000.menu"](https://1000.menu/catalog/recepty-sovetskix-vremen)
             - [Website "webspoon"](https://webspoon.ru/cuisine/kuhnja-sssr)
             - [Website "povarenok"](https://www.povarenok.ru/recipes/kitchen/101/?sort=date_create_asc&order=desc)
-    2. Data format
-        Data should follow this format:
+    2. Raw data format
+        I found it hard to implement a nested json structure immediately at the scraping stage, so I decided to use a flat structure for the raw data. The structure is as follows:
 
-        ```js
+        ```json
         {
-            category: "string",
-            subcategory: "string",
-            recipe_name: "string",
-            ingredients: [
-                {
-                    ingredient_name: "string",
-                    amount: "number",
-                    unit: "string",
-                },
+            "category": "category",
+            "subcategory": "subcategory",
+            "recipe_name": "recipe_name",
+            "ingredients": [
+                "ingredient_1", "ingredient_2", "ingredient_3"
+                // ^ it's really a combination of ingredient and its quantity
             ],
         }
         ```

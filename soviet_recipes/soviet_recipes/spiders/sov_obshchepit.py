@@ -7,21 +7,6 @@ class SovObshchepitSpider(scrapy.Spider):
     start_urls = ["https://sov-obshchepit.ru/retsepty"]
 
     def parse(self, response):
-        # Data should follow this format:
-        #
-        # {
-        #   category: string,
-        #   subcategory: string,
-        #   recipe_name: string,
-        #   ingredients: [
-        #     {
-        #       ingredient_name: string,
-        #       amount: number,
-        #       unit: string,
-        #     },
-        #   ],
-        # }
-        #
 
         main_block = response.xpath("//div[@class='postcontent']")
 
@@ -33,8 +18,8 @@ class SovObshchepitSpider(scrapy.Spider):
         for category_or_subcategory in categories_and_subcategories:
             # If it's a category, update current_category
             if category_or_subcategory.xpath("self::h2"):
-                current_category = category_or_subcategory.xpath(
-                    ".//text()").get()
+                current_category = \
+                    category_or_subcategory.xpath(".//text()").get()
 
             # If it's a subcategory, yield a dict with category and subcategory
             elif category_or_subcategory.xpath("self::h4"):
@@ -43,8 +28,11 @@ class SovObshchepitSpider(scrapy.Spider):
                 if subcategory:
                     subcategory_url = \
                         category_or_subcategory.xpath(".//@href").get()
-                    
-                    req = scrapy.Request(subcategory_url, callback=self.parse_recipe_list)
+
+                    req = scrapy.Request(
+                        subcategory_url,
+                        callback=self.parse_recipe_list
+                    )
                     req.meta["category"] = current_category
                     req.meta["subcategory"] = subcategory
 
@@ -58,13 +46,48 @@ class SovObshchepitSpider(scrapy.Spider):
         # All recipes are in h1's
         recipes = main_block.xpath("//h1")
 
-        # Iterate over recipes
         for recipe in recipes:
             recipe_name = recipe.xpath(".//text()").get()
+            recipe_url = recipe.xpath(".//@href").get()
 
-            if recipe_name:
-                yield {
-                    "category": response.meta["category"],
-                    "subcategory": response.meta["subcategory"],
-                    "recipe_name": recipe_name,
-                }
+            req = scrapy.Request(recipe_url, callback=self.parse_recipe)
+            req.meta["category"] = response.meta["category"]
+            req.meta["subcategory"] = response.meta["subcategory"]
+            req.meta["recipe_name"] = recipe_name
+
+            yield req
+
+    def parse_recipe(self, response):
+
+        main_block = response.xpath("//dd[@class='postcontent']")
+        ingredients = []
+
+        # All ingredients are in h3's ...among a lot of other things
+        # We will include only the h3's that are after "Cостав" and before "Приготовление"
+        h3s = main_block.xpath("//h3")
+
+        in_ingredient_section = False
+
+        for h3 in h3s:
+            h3_strong = h3.xpath(".//strong//text()").get()
+
+            if h3_strong:
+                if "состав".casefold() in h3_strong.casefold():
+                    in_ingredient_section = True
+                    continue
+
+                if "приготовление".casefold() in h3_strong.casefold():
+                    break
+
+            if in_ingredient_section:
+                ingredient = h3.xpath(".//text()").get()
+
+                if ingredient:
+                    ingredients.append(ingredient)
+
+        yield {
+            "category": response.meta["category"],
+            "subcategory": response.meta["subcategory"],
+            "recipe_name": response.meta["recipe_name"],
+            "ingredients": ingredients
+        }

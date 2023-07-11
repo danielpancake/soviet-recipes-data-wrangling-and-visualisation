@@ -10,7 +10,7 @@
             - [Website "webspoon"](https://webspoon.ru/cuisine/kuhnja-sssr)
             - [Website "povarenok"](https://www.povarenok.ru/recipes/kitchen/101/?sort=date_create_asc&order=desc)
     2. Raw data format
-        I found it hard to implement a nested json structure immediately at the scraping stage, so I decided to use a flat structure for the raw data. The structure is as follows:
+        At first, I found it hard to implement a nested json structure, so I decided to use a flat structure for the raw data instead. The structure is as follows:
 
         ```json
         {
@@ -29,6 +29,32 @@
         ```bash
         cd ./scrapping
         scrapy crawl sov-obshchepit -O ../data/raw_data.json
+        ```
+
+    3. Nested raw data format
+
+        Eventually, I figured out a way to implement a nested json structure. I store scrapped data in a nested json structure (`nested_index` in `sov_obshchepit.py`) and write it to a json file when the spider is closed. The structure of this file is as follows:
+
+        ```json
+        {
+            "category_name": {
+                "subcategory_name": {
+                    "recipe_name": {
+                        "ingredients": [
+                            "ingredient_1", "ingredient_2", "ingredient_3"
+                            // ^ it's really a combination of ingredient and its quantity
+                        ],
+                    }
+                }
+            } 
+        }
+        ```
+
+        To scrape raw data with nested structure, run:
+
+        ```bash
+        cd ./scrapping
+        scrapy crawl sov-obshchepit -a nested_output=../data/raw_nested_data.json
         ```
 
 2. Data Wrangling

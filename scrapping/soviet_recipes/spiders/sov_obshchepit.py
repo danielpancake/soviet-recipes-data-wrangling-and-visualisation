@@ -1,13 +1,38 @@
+from collections import defaultdict
+
+import json
+import os
 import scrapy
 
 
 class SovObshchepitSpider(scrapy.Spider):
+
     name = "sov-obshchepit"
     allowed_domains = ["sov-obshchepit.ru"]
     start_urls = ["https://sov-obshchepit.ru/retsepty"]
 
-    def parse(self, response):
+    nested_index = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    # category: { subcategory: { recipe: [] } }
 
+    def __init__(self, nested_output=None, *args, **kwargs):
+        super(SovObshchepitSpider, self).__init__(*args, **kwargs)
+
+        # TODO: check if nested_output is a valid path
+        if nested_output:
+            self.nested_output = nested_output
+
+    def closed(self, reason):
+        if reason != "finished":
+            return
+
+        if not self.nested_output:
+            return
+
+        # Save the nested raw data to a file
+        with open(self.nested_output, "w", encoding="utf-8") as f:
+            json.dump(self.nested_index, f, ensure_ascii=False)
+
+    def parse(self, response):
         main_block = response.xpath("//div[@class='postcontent']")
 
         # All categories are h2's, subcategories are h4's
@@ -40,7 +65,6 @@ class SovObshchepitSpider(scrapy.Spider):
                     yield req
 
     def parse_recipe_list(self, response):
-
         main_block = response.xpath("//div[@class='content']")
 
         # All recipes are in h1's
@@ -58,7 +82,6 @@ class SovObshchepitSpider(scrapy.Spider):
             yield req
 
     def parse_recipe(self, response):
-
         main_block = response.xpath("//dd[@class='postcontent']")
         ingredients = []
 
@@ -84,6 +107,13 @@ class SovObshchepitSpider(scrapy.Spider):
 
                 if ingredient:
                     ingredients.append(ingredient)
+
+        # Unpack values
+        category = response.meta["category"]
+        subcategory = response.meta["subcategory"]
+        recipe_name = response.meta["recipe_name"]
+
+        self.nested_index[category][subcategory][recipe_name] = ingredients
 
         yield {
             "category": response.meta["category"],

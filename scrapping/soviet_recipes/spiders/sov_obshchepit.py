@@ -103,21 +103,25 @@ class SovObshchepitSpider(scrapy.Spider):
                     break
 
             if in_ingredient_section:
-                ingredient = h3.xpath(".//text()").get()
+                ingredient = clean_string(h3.xpath(".//text()").get())
 
                 if ingredient:
                     ingredients.append(ingredient)
 
         # Unpack values
-        category = response.meta["category"]
-        subcategory = response.meta["subcategory"]
-        recipe_name = response.meta["recipe_name"]
+        category = clean_string(response.meta["category"])
+        subcategory = clean_string(response.meta["subcategory"])
+        recipe_name = clean_string(response.meta["recipe_name"])
 
         self.nested_index[category][subcategory][recipe_name] = ingredients
 
         yield {
-            "category": response.meta["category"],
-            "subcategory": response.meta["subcategory"],
-            "recipe_name": response.meta["recipe_name"],
+            "category": category,
+            "subcategory": subcategory,
+            "recipe_name": recipe_name,
             "ingredients": ingredients
         }
+
+
+def clean_string(string):
+    return "".join([char for char in string if char.isprintable()]).strip()

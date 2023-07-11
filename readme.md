@@ -59,7 +59,7 @@
 
 2. Data Wrangling
 
-    pass
+    Part of the data cleaning process is done during the scraping process. For example, all trailing whitespaces are removed from the scraped data, as well as any empty strings or invisible characters. The rest of the data cleaning is done in the `data_wrangling.ipynb` notebook.
 
 3. Data Analysis
 

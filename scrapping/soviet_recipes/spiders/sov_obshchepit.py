@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 import json
-import os
+import re
 import scrapy
 
 
@@ -44,11 +44,13 @@ class SovObshchepitSpider(scrapy.Spider):
             # If it's a category, update current_category
             if category_or_subcategory.xpath("self::h2"):
                 current_category = \
-                    category_or_subcategory.xpath(".//text()").get()
+                    "".join(category_or_subcategory.xpath(
+                        ".//text()").getall())
 
             # If it's a subcategory, yield a dict with category and subcategory
             elif category_or_subcategory.xpath("self::h4"):
-                subcategory = category_or_subcategory.xpath(".//text()").get()
+                subcategory = "".join(
+                    category_or_subcategory.xpath(".//text()").getall())
 
                 if subcategory:
                     subcategory_url = \
@@ -71,7 +73,7 @@ class SovObshchepitSpider(scrapy.Spider):
         recipes = main_block.xpath("//h1")
 
         for recipe in recipes:
-            recipe_name = recipe.xpath(".//text()").get()
+            recipe_name = "".join(recipe.xpath(".//text()").getall())
             recipe_url = recipe.xpath(".//@href").get()
 
             req = scrapy.Request(recipe_url, callback=self.parse_recipe)
@@ -83,30 +85,43 @@ class SovObshchepitSpider(scrapy.Spider):
 
     def parse_recipe(self, response):
         main_block = response.xpath("//dd[@class='postcontent']")
-        ingredients = []
 
         # All ingredients are in h3's ...among a lot of other things
         # We will include only the h3's that are after "Cостав" and before "Приготовление"
-        h3s = main_block.xpath("//h3")
+        # Also, to be sure, we will h2 as well. "Cостав" usually goes afrer h2 with "Рецепт"
+        headers = main_block.xpath("//h2 | //h3")
+        header_texts = ["".join(header.xpath(".//text()").getall())
+                        for header in headers]
 
-        in_ingredient_section = False
+        # Find all indices of "Рецепт", "Состав" and "Приготовление"
+        # Using regex and whole word only search
+        # recipe_indices = [i for i, text in enumerate(header_texts) if re.search(r"\bрецепт\b", text.casefold())]
+        ingredient_indices = [i for i, text in enumerate(
+            header_texts) if re.search(r"\bсостав\b", text.casefold())]
+        cooking_indices = [i for i, text in enumerate(
+            header_texts) if re.search(r"\bприготовление\b", text.casefold())]
 
-        for h3 in h3s:
-            h3_strong = h3.xpath(".//strong//text()").get()
+        # Find a slice of headers that contains ingredients
+        # It should be between "Cостав" and "Приготовление"
+        # So index of "Приготовление" should be greater than index of "Cостав"
+        ingredients = []
 
-            if h3_strong:
-                if "состав".casefold() in h3_strong.casefold():
-                    in_ingredient_section = True
-                    continue
+        if ingredient_indices and cooking_indices:
+            ingredient_index = ingredient_indices[0]
+            cooking_index = 0
 
-                if "приготовление".casefold() in h3_strong.casefold():
+            # TODO: better way to find overlapping indices
+            for index in cooking_indices:
+                if index > ingredient_index:
+                    cooking_index = index
                     break
 
-            if in_ingredient_section:
-                ingredient = clean_string(h3.xpath(".//text()").get())
+            ingredients = header_texts[ingredient_index + 1:cooking_index]
 
-                if ingredient:
-                    ingredients.append(ingredient)
+        if ingredients:
+            ingredients = [
+                clean_string(ingredient) for ingredient in ingredients
+            ]
 
         # Unpack values
         category = clean_string(response.meta["category"])

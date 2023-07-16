@@ -57,6 +57,14 @@
         scrapy crawl sov-obshchepit -a nested_output=../data/raw_nested_data.json
         ```
 
+    4. Sorted and prettified raw data format
+
+        You migth want to sort the raw data by category, subcategory, and recipe name. To do so, run:
+
+        ```bash
+        cat ./data/raw_data.json | jq 'sort_by(.category, .subcategory, .recipe_name)' > ./data/raw_data_sorted.json
+        ```
+
 2. Data Wrangling
 
     Part of the data cleaning process is done during the scraping process. For example, all trailing whitespaces are removed from the scraped data, as well as any empty strings or invisible characters. The rest of the data cleaning is done in the `data_wrangling.ipynb` notebook.

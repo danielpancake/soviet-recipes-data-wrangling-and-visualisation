@@ -1,11 +1,22 @@
 root = exports ? this
 
+capitalise = (string) ->
+  string.charAt(0).toUpperCase() + string.slice(1)
+
 # Based on https://projects.flowingdata.com/tut/interactive_network_demo/
 Network = () ->
   width = 960
   height = 800
 
-  node_charge = -200
+  recipe_color = "#FF0000"
+  recipe_stroke_color = "#000000"
+  recipe_radius = 15
+
+  ingredient_color = "#0000FF"
+  ingredient_stroke_color = "#000000"
+  ingredient_radius = 8
+
+  node_charge = -300
   link_distance = 150
 
   unfiltered_data = []
@@ -17,6 +28,9 @@ Network = () ->
 
   linksG = null
   link = null
+
+  tooltip = Tooltip("vis-tooltip", 230)
+  index_links = {}
 
   force = d3.layout.force()
 
@@ -33,11 +47,33 @@ Network = () ->
 
     force.size([width, height])
 
-    force.on("tick", handleTick)
+    force
       .charge(node_charge)
       .linkDistance(link_distance)
+      .on("tick", handleTick)
 
     update()
+
+  #
+  setupData = (data) ->
+    data.nodes.forEach (n) ->
+      n.x = Math.floor(Math.random() * width)
+      n.y = Math.floor(Math.random() * height)
+
+      [ n.radius, n.color, n.stroke_color ] =
+        if n.is_recipe
+        then [ recipe_radius, recipe_color, recipe_stroke_color ]
+        else [ ingredient_radius, ingredient_color, ingredient_stroke_color ]
+
+    nodesMap  = mapNodes(data.nodes)
+
+    data.links.forEach (l) ->
+      l.source = nodesMap.get(l.source)
+      l.target = nodesMap.get(l.target)
+
+      index_links["#{l.source.id},#{l.target.id}"] = yes
+
+    data
 
   #
   update = () ->
@@ -57,17 +93,20 @@ Network = () ->
     node = nodesG.selectAll("circle.node")
       .data(current_nodes, (d) -> d.id)
 
-    node.enter().append("circle")
+    node
+      .enter().append("circle")
       .attr("class", "node")
       .attr("cx", (d) -> d.x)
       .attr("cy", (d) -> d.y)
       .attr("r", (d) -> d.radius)
-      # .style("fill", (d) -> nodeColors(d.artist))
-      # .style("stroke", (d) -> strokeFor(d))
+      .style("fill", (d) -> d.color)
+      .style("stroke", (d) -> d.stroke_color)
       .style("stroke-width", 1.0)
+      .style("transition", "opacity 0.2s ease-in-out")
 
-    # node.on("mouseover", showDetails)
-    #   .on("mouseout", hideDetails)
+    node
+      .on("mouseover", showDetails)
+      .on("mouseout", hideDetails)
 
     node.exit().remove()
 
@@ -76,7 +115,8 @@ Network = () ->
     link = linksG.selectAll("line.link")
       .data(current_links, (d) -> "#{d.source.id}_#{d.target.id}")
 
-    link.enter().append("line")
+    link
+      .enter().append("line")
       .attr("class", "link")
       .attr("stroke", "#ddd")
       .attr("stroke-opacity", 0.8)
@@ -100,26 +140,95 @@ Network = () ->
       .attr("y2", (d) -> d.target.y)
 
   #
-  setupData = (data) ->
-    data.nodes.forEach (n) ->
-      n.x = Math.floor(Math.random() * width)
-      n.y = Math.floor(Math.random() * height)
+  showDetails = (d, i) ->
+    content = "<p class='main'>#{capitalise d.name}</span></p>"
+    content += "<hr class='tooltip-hr'>"
 
-      n.radius = if n.is_recipe then 10 else 5
+    if d.is_recipe
+      uses = ""
 
-    nodesMap  = mapNodes(data.nodes)
+      # Gather all ingredients used in recipe
+      for l in current_links
+        if l.source == d
+          uses += "<p class='main'>#{l.target.name}</span></p>"
 
-    data.links.forEach (l) ->
-      l.source = nodesMap.get(l.source)
-      l.target = nodesMap.get(l.target)
+      content += "<p class='main'>Ингредиенты:</span></p><br />"
+      content += uses
+    else
+      used_in = ""
 
-    data
+      # Gather all neighbouring recipes
+      for l in current_links
+        if l.source == d
+          used_in += "<p class='main'>#{l.target.name}</span></p>"
+        else if l.target == d
+          used_in += "<p class='main'>#{l.source.name}</span></p>"
+
+      content += "<p class='main'>Используется в:</span></p><br />"
+      content += used_in
+
+    tooltip.showTooltip(content,d3.event)
+
+    if link
+      link
+        .attr("stroke", (l) ->
+          if l.source == d or l.target == d
+          then "#555"
+          else "#ddd"
+        )
+        .attr("stroke-opacity", (l) ->
+          if l.source == d or l.target == d
+          then 1.0
+          else 0.5
+        )
+
+    node
+      .style("opacity", (n) ->
+        if neighboring(d, n)
+        then 1.0
+        else 0.2
+      )
+      .style("stroke", (n) ->
+        if neighboring(d, n)
+        then "#555"
+        else d.stroke_color
+      )
+      .style("stroke-width", (n) ->
+        if neighboring(d, n)
+        then 2.0
+        else 1.0
+      )
+
+    d3
+      .select(this)
+      .style("stroke", "black")
+      .style("stroke-width", 2.0)
+
+  #
+  hideDetails = (d, i) ->
+    tooltip.hideTooltip()
+
+    if link
+      link
+        .attr("stroke", "#ddd")
+        .attr("stroke-opacity", 0.8)
+
+    node
+      .style("opacity", 1.0)
+      .style("stroke", d.stroke_color)
+      .style("stroke-width", 1.0)
+  
+  #
+  neighboring = (a, b) ->
+    index_links["#{a.id},#{b.id}"] or index_links["#{b.id},#{a.id}"] or a.id == b.id
 
   #
   mapNodes = (nodes) ->
     nodesMap = d3.map()
+
     nodes.forEach (n) ->
       nodesMap.set(n.id, n)
+
     nodesMap
 
   #

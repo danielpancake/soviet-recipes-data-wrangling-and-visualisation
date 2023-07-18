@@ -130,8 +130,8 @@ Network = () ->
   # 
   handleTick = (e) ->
     node
-      .attr("cx", (d) -> d.x)
-      .attr("cy", (d) -> d.y)
+      .attr("cx", (d) -> Math.max(d.radius, Math.min(width - d.radius, d.x)))
+      .attr("cy", (d) -> Math.max(d.radius, Math.min(height - d.radius, d.y)))
 
     link
       .attr("x1", (d) -> d.source.x)
@@ -141,7 +141,7 @@ Network = () ->
 
   #
   showDetails = (d, i) ->
-    content = "<p class='main'>#{capitalise d.name}</span></p>"
+    content = "<h2>#{capitalise d.name}</h2>"
     content += "<hr class='tooltip-hr'>"
 
     if d.is_recipe
@@ -150,21 +150,24 @@ Network = () ->
       # Gather all ingredients used in recipe
       for l in current_links
         if l.source == d
-          uses += "<p class='main'>#{l.target.name}</span></p>"
+          uses += "<p class='main'>#{l.target.name}</p>"
 
-      content += "<p class='main'>Ингредиенты:</span></p><br />"
+      content += "<h3>Ингредиенты:</h3><br />"
       content += uses
     else
       used_in = ""
 
       # Gather all neighbouring recipes
       for l in current_links
-        if l.source == d
-          used_in += "<p class='main'>#{l.target.name}</span></p>"
-        else if l.target == d
-          used_in += "<p class='main'>#{l.source.name}</span></p>"
+        used_in += "<p class='main'>#{
+          if l.source == d
+          then l.target.name
+          else if l.target == d
+          then l.source.name
+          else ""
+        }</p>"
 
-      content += "<p class='main'>Используется в:</span></p><br />"
+      content += "<h3>Используется в:</h3><br />"
       content += used_in
 
     tooltip.showTooltip(content,d3.event)

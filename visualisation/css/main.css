@@ -21,8 +21,11 @@ body {
 .tooltip p.main {
   font-size: 15px;
   margin: 0;
+  overflow: hidden;
   padding: 0;
   text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 hr.tooltip-hr {
@@ -39,7 +42,3 @@ hr.tooltip-hr {
   font-weight: bold;
 }
 
-line.link {
-  fill: none;
-  stroke-width: 1.5px;
-}

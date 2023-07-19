@@ -62,16 +62,12 @@ Network = () ->
     vis = el.append("svg")
       .attr("width", width)
       .attr("height", height)
+      .attr("class", "svg-content")
 
     linksG = vis.append("g").attr("id", "links")
     nodesG = vis.append("g").attr("id", "nodes")
 
-    force.size([width, height])
-
-    force
-      .charge(node_charge)
-      .linkDistance(link_distance)
-      .on("tick", handleTick)
+    force.on("tick", handleTick)
 
     update()
 
@@ -98,6 +94,8 @@ Network = () ->
 
   #
   update = () ->
+    network.updateSize()
+
     current_nodes = unfiltered_data.nodes #filterNodes(allData.nodes)
     current_links = unfiltered_data.links #filterLinks(allData.links, current_nodes)
 
@@ -136,13 +134,11 @@ Network = () ->
 
   #
   handleMouseDown = (d, i) ->
-    d.fixed = yes
     is_dragging = yes
     hideDetails(d, i)
 
   #
   handleMouseUp = (d, i) ->
-    d.fixed = no
     is_dragging = no
     showDetails(d, i)
 
@@ -323,6 +319,20 @@ Network = () ->
 
         d.searched = no
 
+  #
+  network.updateSize = () ->
+    width = parseInt(d3.select("#network").style("width"))
+    height = parseInt(d3.select("#network").style("height"))
+
+    scale_factor = Math.min(width, height) / Math.min(960, 960)
+
+    force
+      .charge(node_charge * scale_factor)
+      .linkDistance(link_distance * scale_factor)
+
+    force.size([width, height])
+    force.start()
+
   return network
 
 $ ->
@@ -375,3 +385,7 @@ $ ->
   # Update nodes on search
   $search.on "keyup", (e) ->
     network.updateSearch($(this).val())
+
+  # On window resize, get new width/height and update force layout size
+  d3.select(window).on "resize", ->
+    network.updateSize()

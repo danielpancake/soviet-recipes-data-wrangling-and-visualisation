@@ -22,7 +22,7 @@
     ></script>
 
     <!-- d3.js -->
-    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.5/d3.layout.cloud.min.js"
       integrity="sha512-HjKxWye8lJGPu5q1u/ZYkHlJrJdm6KGr89E6tOrXeKm1mItb1xusPU8QPcKVhP8F9LjpZT7vsu1Fa+dQywP4eg=="
@@ -32,17 +32,32 @@
   </head>
 
   <body>
-    <select id="subcategory_select"></select>
+    <select id="subcategory-select"></select>
 
     <div>
-      <form id="search_form" action="" method="post">
-        <p class="search_title">
-          Поиск: <input id="search" type="text" placeholder="Название рецепта или ингредиента" />
+      <form id="search-form" action="" method="post">
+        <p class="search-title">
+          Поиск:
+          <input
+            id="search"
+            type="text"
+            placeholder="Название рецепта или ингредиента"
+          />
         </p>
       </form>
     </div>
 
     <div id="network"></div>
+
+    <div id="stats">
+      <div id="categories-stats">
+        <object
+          type="image/svg+xml"
+          data="images/recipes_count_per_category.svg"
+        ></object>
+      </div>
+      <div id="per-category-stats"></div>
+    </div>
 
     <script type="text/javascript" src="js/Tooltip.js"></script>
     <script type="text/coffeescript" src="coffee/vis.coffee"></script>

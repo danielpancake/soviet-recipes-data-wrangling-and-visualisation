@@ -277,8 +277,25 @@ Network = () ->
 $ ->
   network = Network()
 
-  $subcategory_select = $("#subcategory_select")
+  $subcategory_select = $("#subcategory-select")
   $search = $("#search")
+
+  $category_stats = $("#category-stats")
+  $per_category_stats = $("#per-category-stats")
+
+  current_category = null
+
+  updateCategoryStats = () ->
+    selected_category = $subcategory_select.find("option:selected").parent().attr("label")
+
+    # Show category stats
+    if current_category == null or current_category != selected_category
+      svg_path = "images/stats_per_category/#{selected_category}.svg"
+
+      $per_category_stats.empty()
+      $per_category_stats.append("<object type='image/svg+xml' data='#{svg_path}'></object>")
+
+      current_category = selected_category
 
   # Load json index file
   d3.json "data/network/index.json", (error, json) ->
@@ -295,12 +312,14 @@ $ ->
     # Finish with loading first subcategory
     d3.json "data/network/#{$subcategory_select.val()}", (error, json) ->
       network(d3.select("#network"), json)
+      updateCategoryStats()
 
   # On subcategory selection change
   $subcategory_select.on "change", (e) ->
     d3.json "data/network/#{$(this).val()}", (error, json) ->
       network.updateData(json)
       network.updateSearch($search.val())
+      updateCategoryStats()
 
   # Update nodes on search
   $search.on "keyup", (e) ->

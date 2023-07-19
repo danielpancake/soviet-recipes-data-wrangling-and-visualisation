@@ -1,10 +1,11 @@
 body {
+  background-color: #f4f0e4;
   font-family: Arial, sans-serif;
 }
 
 .tooltip {
   -moz-border-radius: 3px;
-  background: #ffffff90;
+  background: #ffffffaa;
   border-radius: 3px;
   border: 2px solid #ddd;
   color: #000;
@@ -41,4 +42,3 @@ hr.tooltip-hr {
 .tooltip .name {
   font-weight: bold;
 }
-

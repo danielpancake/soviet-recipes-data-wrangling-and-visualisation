@@ -82,7 +82,7 @@ Network = () ->
 
     force.nodes(current_nodes)
     updateNodes()
-    
+
     force.links(current_links)
     updateLinks()
 
@@ -127,17 +127,25 @@ Network = () ->
 
     link.exit().remove()
 
-  # 
+  #
   handleTick = (e) ->
     node
-      .attr("cx", (d) -> Math.max(d.radius, Math.min(width - d.radius, d.x)))
-      .attr("cy", (d) -> Math.max(d.radius, Math.min(height - d.radius, d.y)))
+      .attr("cx", (d) -> boundHorizontally(d))
+      .attr("cy", (d) -> boundVertically(d))
 
     link
-      .attr("x1", (d) -> d.source.x)
-      .attr("y1", (d) -> d.source.y)
-      .attr("x2", (d) -> d.target.x)
-      .attr("y2", (d) -> d.target.y)
+      .attr("x1", (d) -> boundHorizontally(d.source))
+      .attr("y1", (d) -> boundVertically(d.source))
+      .attr("x2", (d) -> boundHorizontally(d.target))
+      .attr("y2", (d) -> boundVertically(d.target))
+
+  #
+  boundHorizontally = (d) ->
+    Math.max(d.radius, Math.min(width - d.radius, d.x))
+
+  #
+  boundVertically = (d) ->
+    Math.max(d.radius, Math.min(height - d.radius, d.y))
 
   #
   showDetails = (d, i) ->
@@ -170,10 +178,10 @@ Network = () ->
       content += "<h3>Используется в:</h3><br />"
       content += used_in
 
-    tooltip.showTooltip(content,d3.event)
+    tooltip.showTooltip(content, d3.event)
 
     if link
-      link
+    then link
         .attr("stroke", (l) ->
           if l.source == d or l.target == d
           then "#555"
@@ -185,42 +193,45 @@ Network = () ->
           else 0.5
         )
 
-    node
-      .style("opacity", (n) ->
+    # Do not highlight nodes if search is active
+    node.each (n) ->
+      el = d3.select(this)
+      el.style("opacity", (n) ->
         if neighboring(d, n)
         then 1.0
         else 0.2
       )
-      .style("stroke", (n) ->
-        if neighboring(d, n)
-        then "#555"
-        else d.stroke_color
-      )
-      .style("stroke-width", (n) ->
-        if neighboring(d, n)
-        then 2.0
-        else 1.0
-      )
 
-    d3
-      .select(this)
-      .style("stroke", "black")
-      .style("stroke-width", 2.0)
+      if not n.searched
+        el.style("stroke", (n) ->
+          if neighboring(d, n)
+          then "#555"
+          else d.stroke_color
+        )
+        .style("stroke-width", (n) ->
+          if neighboring(d, n)
+          then 2.0
+          else 1.0
+        )
 
   #
   hideDetails = (d, i) ->
     tooltip.hideTooltip()
 
     if link
-      link
+    then link
         .attr("stroke", "#ddd")
         .attr("stroke-opacity", 0.8)
 
-    node
-      .style("opacity", 1.0)
-      .style("stroke", d.stroke_color)
-      .style("stroke-width", 1.0)
-  
+    node.each (n) ->
+      el = d3.select(this)
+
+      el.style("opacity", 1.0)
+
+      if not n.searched
+        el.style("stroke", n.stroke_color)
+          .style("stroke-width", 1.0)
+
   #
   neighboring = (a, b) ->
     index_links["#{a.id},#{b.id}"] or index_links["#{b.id},#{a.id}"] or a.id == b.id
@@ -241,13 +252,33 @@ Network = () ->
     node.remove()
     update()
 
-  return network
+  #
+  network.updateSearch = (search) ->
+    regex = new RegExp(search.toLowerCase())
 
+    node.each (d) ->
+      el = d3.select(this)
+      match = d.name.toLowerCase().search(regex)
+
+      if search.length > 0 and match >= 0
+        el.style("fill", "#F38630")
+          .style("stroke", "#555")
+          .style("stroke-width", 5.0)
+
+        d.searched = yes
+      else
+        el.style("fill", (d) -> d.color)
+          .style("stroke-width", 1.0)
+
+        d.searched = no
+
+  return network
 
 $ ->
   network = Network()
 
   $subcategory_select = $("#subcategory_select")
+  $search = $("#search")
 
   # Load json index file
   d3.json "data/network/index.json", (error, json) ->
@@ -267,6 +298,10 @@ $ ->
 
   # On subcategory selection change
   $subcategory_select.on "change", (e) ->
-    # console.log $(this).val()
     d3.json "data/network/#{$(this).val()}", (error, json) ->
       network.updateData(json)
+      network.updateSearch($search.val())
+
+  # Update nodes on search
+  $search.on "keyup", (e) ->
+    network.updateSearch($(this).val())

@@ -34,10 +34,11 @@ function Tooltip(tooltipId, width) {
     var ttleft =
       curX < $(window).width() / 2
         ? curX - toolTipW - xOffset * 2
-        : curX + xOffset;
+        : Math.min(curX + xOffset, $(window).width() - toolTipW - xOffset * 2);
     if (ttleft < windowX + xOffset) {
       ttleft = windowX + xOffset;
     }
+
     var tttop =
       curY - windowY + yOffset * 2 + toolTipeH > $(window).height()
         ? curY - toolTipeH - yOffset * 2

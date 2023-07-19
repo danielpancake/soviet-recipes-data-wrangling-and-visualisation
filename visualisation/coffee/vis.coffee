@@ -23,7 +23,7 @@ Network = () ->
 
   link_highlight_color = "#555"
   link_highlight_opacity = 1.0
-  link_highlight_stroke_width = 3.0
+  link_highlight_stroke_width = 2.0
 
   node_stroke_width = 1.0
 
@@ -52,6 +52,8 @@ Network = () ->
   index_links = {}
 
   force = d3.layout.force()
+
+  is_dragging = no
 
   # Initializes visualization and starts force layout
   network = (el, data) ->
@@ -124,10 +126,25 @@ Network = () ->
       .style("transition", "opacity 0.2s ease-in-out")
 
     node
+      .on("mousedown", handleMouseDown)
+      .on("mouseup", handleMouseUp)
       .on("mouseover", showDetails)
       .on("mouseout", hideDetails)
+      .call(force.drag)
 
     node.exit().remove()
+
+  #
+  handleMouseDown = (d, i) ->
+    d.fixed = yes
+    is_dragging = yes
+    hideDetails(d, i)
+
+  #
+  handleMouseUp = (d, i) ->
+    d.fixed = no
+    is_dragging = no
+    showDetails(d, i)
 
   #
   updateLinks = () ->
@@ -178,9 +195,9 @@ Network = () ->
       # Gather all ingredients used in recipe
       for l in current_links
         if l.source == d
-          uses += "<p class='main'>#{l.target.name}</p>"
+          uses += "<p class='main'>#{capitalise l.target.name}</p>"
 
-      content += "<h3>Ингредиенты:</h3><br />"
+      content += "<h3>Ингредиенты:</h3>"
       content += uses
     else
       used_in = ""
@@ -195,13 +212,16 @@ Network = () ->
           else ""
         }</p>"
 
-      content += "<h3>Используется в:</h3><br />"
+      content += "<h3>Используется в</h3>"
       content += used_in
 
     content
 
   #
   showDetails = (d, i) ->
+    if is_dragging
+    then return
+
     content = generateTooltipContent d
     tooltip.showTooltip(content, d3.event)
 

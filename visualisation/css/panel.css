@@ -1,3 +1,7 @@
 #panel, #panel input, #panel select {
   width: 100%;
 }
+
+#panel input, #panel select {
+  padding: 1em;
+}

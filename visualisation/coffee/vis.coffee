@@ -48,7 +48,7 @@ Network = () ->
   linksG = null
   link = null
 
-  tooltip = Tooltip("vis-tooltip", 230)
+  tooltip = Tooltip("vis-tooltip", 320)
   index_links = {}
 
   force = d3.layout.force()

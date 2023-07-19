@@ -1,0 +1,12 @@
+#network h1 {
+  background: -webkit-linear-gradient(#131313, #0000);
+  display: block;
+  position: absolute;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+#sunburst iframe {
+  display: block;
+  margin: 0 auto;
+}

@@ -6,15 +6,34 @@ capitalise = (string) ->
 # Based on https://projects.flowingdata.com/tut/interactive_network_demo/
 Network = () ->
   width = 960
-  height = 800
+  height = 960
 
-  recipe_color = "#FF0000"
+  # ==== STYLES ====
+  recipe_color = "#ef553b"
   recipe_stroke_color = "#000000"
   recipe_radius = 15
 
-  ingredient_color = "#0000FF"
+  ingredient_color = "#636efa"
   ingredient_stroke_color = "#000000"
   ingredient_radius = 8
+
+  link_color = "#dbd8ce"
+  link_opacity = 1.0
+  link_stroke_width = 0.5
+
+  link_highlight_color = "#555"
+  link_highlight_opacity = 1.0
+  link_highlight_stroke_width = 3.0
+
+  node_stroke_width = 1.0
+
+  node_highlight_stroke_color = "#555"
+  node_highlight_stroke_width = 2.0
+
+  node_searched_fill_color = "#ffa15a"
+  node_searched_stroke_color = "#555"
+  node_searched_stroke_width = 5.0
+  # ==== STYLES ====
 
   node_charge = -300
   link_distance = 150
@@ -101,7 +120,7 @@ Network = () ->
       .attr("r", (d) -> d.radius)
       .style("fill", (d) -> d.color)
       .style("stroke", (d) -> d.stroke_color)
-      .style("stroke-width", 1.0)
+      .style("stroke-width", node_stroke_width)
       .style("transition", "opacity 0.2s ease-in-out")
 
     node
@@ -118,8 +137,9 @@ Network = () ->
     link
       .enter().append("line")
       .attr("class", "link")
-      .attr("stroke", "#ddd")
-      .attr("stroke-opacity", 0.8)
+      .attr("stroke", link_color)
+      .attr("stroke-opacity", link_opacity)
+      .attr("stroke-width", link_stroke_width)
       .attr("x1", (d) -> d.source.x)
       .attr("y1", (d) -> d.source.y)
       .attr("x2", (d) -> d.target.x)
@@ -148,7 +168,7 @@ Network = () ->
     Math.max(d.radius, Math.min(height - d.radius, d.y))
 
   #
-  showDetails = (d, i) ->
+  generateTooltipContent = (d) ->
     content = "<h2>#{capitalise d.name}</h2>"
     content += "<hr class='tooltip-hr'>"
 
@@ -178,19 +198,29 @@ Network = () ->
       content += "<h3>Используется в:</h3><br />"
       content += used_in
 
+    content
+
+  #
+  showDetails = (d, i) ->
+    content = generateTooltipContent d
     tooltip.showTooltip(content, d3.event)
 
     if link
     then link
         .attr("stroke", (l) ->
           if l.source == d or l.target == d
-          then "#555"
-          else "#ddd"
+          then link_highlight_color
+          else link_color
         )
         .attr("stroke-opacity", (l) ->
           if l.source == d or l.target == d
-          then 1.0
-          else 0.5
+          then link_highlight_opacity
+          else link_opacity
+        )
+        .attr("stroke-width", (l) ->
+          if l.source == d or l.target == d
+          then link_highlight_stroke_width
+          else 0
         )
 
     # Do not highlight nodes if search is active
@@ -205,13 +235,13 @@ Network = () ->
       if not n.searched
         el.style("stroke", (n) ->
           if neighboring(d, n)
-          then "#555"
+          then node_highlight_stroke_color
           else d.stroke_color
         )
         .style("stroke-width", (n) ->
           if neighboring(d, n)
-          then 2.0
-          else 1.0
+          then node_highlight_stroke_width
+          else node_stroke_width
         )
 
   #
@@ -220,17 +250,17 @@ Network = () ->
 
     if link
     then link
-        .attr("stroke", "#ddd")
-        .attr("stroke-opacity", 0.8)
+        .attr("stroke", link_color)
+        .attr("stroke-opacity", link_opacity)
+        .attr("stroke-width", link_stroke_width)
 
     node.each (n) ->
       el = d3.select(this)
-
       el.style("opacity", 1.0)
 
       if not n.searched
         el.style("stroke", n.stroke_color)
-          .style("stroke-width", 1.0)
+          .style("stroke-width", node_stroke_width)
 
   #
   neighboring = (a, b) ->
@@ -261,14 +291,15 @@ Network = () ->
       match = d.name.toLowerCase().search(regex)
 
       if search.length > 0 and match >= 0
-        el.style("fill", "#F38630")
-          .style("stroke", "#555")
-          .style("stroke-width", 5.0)
+        el.style("fill", node_searched_fill_color)
+          .style("stroke", node_searched_stroke_color)
+          .style("stroke-width", node_searched_stroke_width)
 
         d.searched = yes
       else
         el.style("fill", (d) -> d.color)
-          .style("stroke-width", 1.0)
+          .style("stroke", (d) -> d.stroke_color)
+          .style("stroke-width", node_stroke_width)
 
         d.searched = no
 

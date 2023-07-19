@@ -1,6 +1,16 @@
-body {
+html {
   background-color: #f4f0e4;
+}
+
+body {
   font-family: Arial, sans-serif;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+object {
+  width: auto;
+  height: auto;
 }
 
 .tooltip {

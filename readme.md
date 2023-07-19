@@ -19,10 +19,11 @@
             "recipe_name": "recipe_name",
             "ingredients": [
                 "ingredient_1", "ingredient_2", "ingredient_3"
-                // ^ it's really a combination of ingredient and its quantity
             ],
         }
         ```
+
+        Ingredients are really a combination of ingredient name, its quantity, and its unit of measurement.
 
         To scrape raw data, run:
 
@@ -42,13 +43,14 @@
                     "recipe_name": {
                         "ingredients": [
                             "ingredient_1", "ingredient_2", "ingredient_3"
-                            // ^ it's really a combination of ingredient and its quantity
                         ],
                     }
                 }
-            } 
+            }
         }
         ```
+
+        Ingredients are really a combination of ingredient name, its quantity, and its unit of measurement.
 
         To scrape raw data with nested structure, run:
 
@@ -68,6 +70,29 @@
 2. Data Wrangling
 
     Part of the data cleaning process is done during the scraping process. For example, all trailing whitespaces are removed from the scraped data, as well as any empty strings or invisible characters. The rest of the data cleaning is done in the `data_wrangling.ipynb` notebook.
+
+    1. Structured cleaned data
+
+        I used Claude AI assistent to convert the raw strings of ingredients into structured data. The resulting data is stored in `data/structured_data.json`. The structure of this file is as follows:
+
+        ```json
+        {
+            "category_name": {
+                "subcategory_name": {
+                    "recipe_name": {
+                        "ingredients": [
+                            "ingredient_1", "ingredient_2", "ingredient_3"
+                        ],
+                        "parsed_ingredients": [
+                            ["ingredient_name", "quantity", "measure units"],
+                            ["ingredient_name", "quantity", "measure units"],
+                            ["ingredient_name", "quantity", "measure units"]
+                        ]
+                    }
+                }
+            }
+        }
+        ```
 
 3. Data Analysis
 

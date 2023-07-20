@@ -1,4 +1,4 @@
-# unnamed data wrangling yadda yadda project
+# Soviet recipes data wrangling and visualisation project
 
 ## Project Description
 

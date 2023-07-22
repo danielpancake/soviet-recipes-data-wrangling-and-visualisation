@@ -1,4 +1,4 @@
-# Soviet recipes data wrangling and visualisation project
+# Soviet recipes data wrangling and visualization project
 
 ## Project Description
 
@@ -94,14 +94,20 @@
         }
         ```
 
-3. Data Analysis
+3. Data Visualization
 
-    pass
+    Visualization consists of two major parts: **static** using `plotly` (python) and **dynamic** using `d3.js` (coffeescript) and `plotly` (python export to html+js).
 
-4. Data Visualization
+    Notebook `data_visualization.ipynb` has all the code for generating svg and html files used on the website.
 
-    pass
+    Three types of charts are used:
+
+    1. Bar charts. It shows the number of recipes per subcategory in the specified category.
+    2. Sunburst chart. Similar to the bar chart, shows the number of recipes per subcategory of each category.
+    3. Networks. For the specified category, it shows connections between different recipes and used ingredients.
 
 ## Misc
 
-Visual inspiration: [Soviet drawn images](https://trip-for-the-soul.ru/foto/chto-gotovili-v-sssr-na-kazhdyj-den.html)
+Visual inspiration: [Soviet drawn images](https://trip-for-the-soul.ru/foto/chto-gotovili-v-sssr-na-kazhdyj-den.html).
+
+(I intended to use those in the final design, however, did not.)

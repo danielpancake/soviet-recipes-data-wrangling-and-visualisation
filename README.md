@@ -110,4 +110,4 @@
 
 Visual inspiration: [everyday soviet food](https://trip-for-the-soul.ru/foto/chto-gotovili-v-sssr-na-kazhdyj-den.html).
 
-(I intended to use those in the final design, however, did not.)
+(I intended to use those in the final design, however, did not).
